@@ -1,0 +1,62 @@
+server:
+  port: 8080
+  shutdown: graceful
+
+spring:
+  application:
+    name: spring-rag-service
+  lifecycle:
+    timeout-per-shutdown-phase: 30s
+  codec:
+    max-in-memory-size: 2MB
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      probes:
+        enabled: true
+
+logging:
+  level:
+    root: INFO
+    com.example.rag: INFO
+  pattern:
+    console: "ts=%d{ISO8601} level=%p thread=%t logger=%logger{36} msg=\"%m\"%n"
+
+rag:
+  sidecar:
+    base-url: ${SIDECAR_URL:http://localhost:8000}
+    connect-timeout: 5s
+    response-timeout: 180s
+    max-connections: 100
+    max-in-memory-bytes: 1048576
+  ingestion:
+    max-file-bytes: 52428800
+    allowed-extensions: [pdf, txt, md, docx, pptx, xlsx, html, csv]
+  streaming:
+    idle-timeout: 60s
+    heartbeat: 15s
+    prefetch: 16
+    default-top-k: 5
+  watcher:
+    enabled: ${WATCH_ENABLED:true}
+    directory: ${WATCH_DIR:./data/watch}
+    debounce: 1500ms
+    webhook-secret: ${WEBHOOK_SECRET:}
+  # Vector store settings. The sidecar owns the connection (see docker-compose.yml);
+  # they are mirrored here so GET /api/rag/status reports the active backend.
+  vector-store:
+    type: ${VECTOR_STORE_TYPE:qdrant}
+    host: ${QDRANT_HOST:localhost}
+    port: ${QDRANT_PORT:6333}
+    collection: ${QDRANT_COLLECTION:documents}
